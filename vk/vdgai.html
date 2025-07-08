@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Random Video Gái</title>
+</head>
+<body>
+  <h1>Random Video Gái</h1>
+  <button onclick="getVideo()">Lấy video mới</button>
+  <div id="result">
+    <p>Đang tải...</p>
+  </div>
+
+  <script>
+    async function getVideo() {
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = '<p>Đang tải...</p>';
+
+      try {
+        const res = await fetch('/api/vdgai');
+
+        const contentType = res.headers.get("content-type") || "";
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`Lỗi server: ${res.status} - ${errText}`);
+        }
+
+        if (!contentType.includes("application/json")) {
+          const raw = await res.text();
+          throw new Error(`Không phải JSON. Dữ liệu trả về:\n${raw}`);
+        }
+
+        const data = await res.json();
+
+        if (data.video) {
+          resultDiv.innerHTML = `
+            <p>${data.message || 'Video ngẫu nhiên'}</p>
+            <video controls width="400" autoplay>
+              <source src="${data.video}" type="video/mp4">
+              Trình duyệt không hỗ trợ video.
+            </video>
+            <p><a href="${data.video}" target="_blank">Mở trong tab mới</a></p>
+          `;
+        } else {
+          resultDiv.innerHTML = `<p>Lỗi: Không có video trong dữ liệu trả về.</p>`;
+        }
+
+      } catch (err) {
+        resultDiv.innerHTML = `<p style="color:red;">Lỗi kết nối hoặc dữ liệu: ${err.message}</p>`;
+        console.error(err);
+      }
+    }
+
+    // Gọi tự động khi trang vừa tải
+    getVideo();
+  </script>
+</body>
+</html>
